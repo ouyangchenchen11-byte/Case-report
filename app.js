@@ -16,7 +16,9 @@ const state = {
   category: "in",
   selectedPatientId: "",
   directoryHandle: null,
-  deferredInstall: null
+  deferredInstall: null,
+  cloudEndpoint: "",
+  cloudToken: ""
 };
 
 const els = {
@@ -29,6 +31,10 @@ const els = {
   createPatientBtn: document.querySelector("#createPatientBtn"),
   pickFolderBtn: document.querySelector("#pickFolderBtn"),
   folderStatus: document.querySelector("#folderStatus"),
+  cloudEndpointInput: document.querySelector("#cloudEndpointInput"),
+  cloudTokenInput: document.querySelector("#cloudTokenInput"),
+  cloudStatus: document.querySelector("#cloudStatus"),
+  saveCloudBtn: document.querySelector("#saveCloudBtn"),
   modules: document.querySelector("#modules"),
   moduleTemplate: document.querySelector("#moduleTemplate"),
   records: document.querySelector("#records"),
@@ -38,6 +44,8 @@ const els = {
 };
 
 const patientKey = "medical_collector_patients_v1";
+const cloudEndpointKey = "medical_collector_cloud_endpoint_v1";
+const cloudTokenKey = "medical_collector_cloud_token_v1";
 const dbName = "medical_collector_db";
 const storeName = "records";
 
@@ -116,6 +124,53 @@ async function writeFileToDirectory(record) {
   await writable.write(record.blob);
   await writable.close();
   return true;
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const value = String(reader.result);
+      resolve(value.slice(value.indexOf(",") + 1));
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadToCloud(record) {
+  if (!state.cloudEndpoint) {
+    return { skipped: true };
+  }
+
+  const base64 = await fileToBase64(record.blob);
+  const relativePath = [
+    categoryMap[record.category],
+    record.patientFolder,
+    record.moduleFolder,
+    record.fileName
+  ].join("/");
+
+  const response = await fetch(state.cloudEndpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${state.cloudToken}`
+    },
+    body: JSON.stringify({
+      relativePath,
+      fileName: record.fileName,
+      contentType: record.type || "application/octet-stream",
+      size: record.size,
+      base64
+    })
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(text || "云端同步失败");
+  }
+  return { ok: true };
 }
 
 function renderPatients() {
@@ -225,6 +280,7 @@ async function handleFiles(module, files) {
   }
   if (!files || !files.length) return;
 
+  const newRecords = [];
   for (let index = 0; index < files.length; index += 1) {
     const file = files[index];
     const ext = file.name.match(/\.[a-zA-Z0-9]+$/)?.[0] || ".jpg";
@@ -245,6 +301,7 @@ async function handleFiles(module, files) {
     };
 
     await addRecord(record);
+    newRecords.push(record);
     try {
       await writeFileToDirectory(record);
     } catch (error) {
@@ -253,7 +310,25 @@ async function handleFiles(module, files) {
   }
 
   await renderRecords();
-  alert("已保存到本地资料库。浏览器支持时也已写入所选手机文件夹。");
+  let cloudCount = 0;
+  let cloudError = "";
+  for (const record of newRecords) {
+    try {
+      const result = await uploadToCloud(record);
+      if (result.ok) cloudCount += 1;
+    } catch (error) {
+      cloudError = error.message;
+      break;
+    }
+  }
+
+  if (cloudError) {
+    alert(`已保存到本地资料库，但云端同步失败：${cloudError}`);
+  } else if (state.cloudEndpoint) {
+    alert(`已保存到本地资料库，并同步 ${cloudCount} 个文件到云端。`);
+  } else {
+    alert("已保存到本地资料库。浏览器支持时也已写入所选手机文件夹。");
+  }
 }
 
 async function pickFolder() {
@@ -277,6 +352,24 @@ async function exportIndex() {
   link.click();
 }
 
+function loadCloudSettings() {
+  state.cloudEndpoint = localStorage.getItem(cloudEndpointKey) || "";
+  state.cloudToken = localStorage.getItem(cloudTokenKey) || "";
+  els.cloudEndpointInput.value = state.cloudEndpoint;
+  els.cloudTokenInput.value = state.cloudToken;
+  els.cloudStatus.textContent = state.cloudEndpoint
+    ? "已配置。拍照资料会在本地保存后同步到云盘网关。"
+    : "未配置。配置后，拍照资料会同步到云盘网关。";
+}
+
+function saveCloudSettings() {
+  state.cloudEndpoint = els.cloudEndpointInput.value.trim();
+  state.cloudToken = els.cloudTokenInput.value.trim();
+  localStorage.setItem(cloudEndpointKey, state.cloudEndpoint);
+  localStorage.setItem(cloudTokenKey, state.cloudToken);
+  loadCloudSettings();
+}
+
 els.tabs.forEach((button) => {
   button.addEventListener("click", () => {
     state.category = button.dataset.category;
@@ -292,6 +385,7 @@ els.patientSelect.addEventListener("change", () => {
 
 els.createPatientBtn.addEventListener("click", createPatient);
 els.pickFolderBtn.addEventListener("click", () => pickFolder().catch((error) => alert(error.message)));
+els.saveCloudBtn.addEventListener("click", saveCloudSettings);
 els.refreshRecordsBtn.addEventListener("click", renderRecords);
 els.exportIndexBtn.addEventListener("click", () => exportIndex().catch((error) => alert(error.message)));
 
@@ -313,5 +407,5 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js");
 }
 
+loadCloudSettings();
 render();
-

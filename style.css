@@ -151,6 +151,11 @@ summary {
   align-items: center;
 }
 
+.cloud-panel {
+  display: grid;
+  gap: 12px;
+}
+
 .modules {
   display: grid;
   gap: 12px;
@@ -245,4 +250,3 @@ summary {
     grid-template-columns: 1fr;
   }
 }
-

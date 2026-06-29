@@ -57,6 +57,22 @@
       <button id="pickFolderBtn" class="secondary">选择文件夹</button>
     </section>
 
+    <section class="panel cloud-panel">
+      <div>
+        <h2>云端同步</h2>
+        <p id="cloudStatus">未配置。配置后，拍照资料会同步到云盘网关。</p>
+      </div>
+      <label class="field">
+        <span>同步网关地址</span>
+        <input id="cloudEndpointInput" placeholder="https://你的网关地址/upload" />
+      </label>
+      <label class="field">
+        <span>上传口令</span>
+        <input id="cloudTokenInput" type="password" placeholder="Worker 中配置的 UPLOAD_TOKEN" />
+      </label>
+      <button id="saveCloudBtn" class="secondary">保存设置</button>
+    </section>
+
     <section id="modules" class="modules"></section>
 
     <section class="panel">
@@ -70,7 +86,7 @@
 
     <section class="panel">
       <h2>提示</h2>
-      <p class="note">所有资料都会先保存在本机浏览器资料库。诊断、治疗、用药和出院医嘱仍需医生确认。</p>
+      <p class="note">所有资料都会先保存在本机浏览器资料库。配置云端同步后，会额外上传到云盘。诊断、治疗、用药和出院医嘱仍需医生确认。</p>
     </section>
   </main>
 
@@ -101,4 +117,3 @@
   <script src="./app.js"></script>
 </body>
 </html>
-

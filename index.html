@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#176b5b" />
+  <title>病历采集</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <div>
+        <h1>病历采集</h1>
+        <p>新建患者，点击模块拍照，资料按患者和模块分类保存。</p>
+      </div>
+      <button id="installBtn" class="icon-button" hidden>安装</button>
+    </header>
+
+    <section class="panel">
+      <div class="tabs" role="tablist">
+        <button class="active" data-category="in">在院</button>
+        <button data-category="out">出院</button>
+      </div>
+
+      <label class="field">
+        <span>患者</span>
+        <select id="patientSelect"></select>
+      </label>
+
+      <details class="new-patient">
+        <summary>新建患者</summary>
+        <div class="form-grid">
+          <label class="field">
+            <span>姓名或代号</span>
+            <input id="nameInput" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>住院号</span>
+            <input id="hospitalNoInput" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>诊断或科室</span>
+            <input id="diagnosisInput" autocomplete="off" />
+          </label>
+          <button id="createPatientBtn" class="primary">创建并选中</button>
+        </div>
+      </details>
+    </section>
+
+    <section class="panel storage-panel">
+      <div>
+        <h2>手机文件夹</h2>
+        <p id="folderStatus">未选择。浏览器支持时，可把照片直接写入你选定的手机文件夹。</p>
+      </div>
+      <button id="pickFolderBtn" class="secondary">选择文件夹</button>
+    </section>
+
+    <section id="modules" class="modules"></section>
+
+    <section class="panel">
+      <h2>本地资料库</h2>
+      <div class="library-actions">
+        <button id="refreshRecordsBtn" class="secondary">刷新记录</button>
+        <button id="exportIndexBtn" class="secondary">导出索引</button>
+      </div>
+      <div id="records" class="records"></div>
+    </section>
+
+    <section class="panel">
+      <h2>提示</h2>
+      <p class="note">所有资料都会先保存在本机浏览器资料库。诊断、治疗、用药和出院医嘱仍需医生确认。</p>
+    </section>
+  </main>
+
+  <template id="moduleTemplate">
+    <article class="module">
+      <div>
+        <h2></h2>
+        <p></p>
+      </div>
+      <label class="upload">
+        <input type="file" accept="image/*" capture="environment" multiple />
+        <span>拍照</span>
+      </label>
+    </article>
+  </template>
+
+  <template id="recordTemplate">
+    <article class="record">
+      <img alt="" />
+      <div>
+        <strong></strong>
+        <p></p>
+        <button class="download">下载</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="./app.js"></script>
+</body>
+</html>
+

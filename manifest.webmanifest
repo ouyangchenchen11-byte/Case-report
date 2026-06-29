@@ -1,0 +1,16 @@
+{
+  "name": "病历采集",
+  "short_name": "病历采集",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f7f8",
+  "theme_color": "#176b5b",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
+
